@@ -1,0 +1,14 @@
+[Unit]
+Description=Core-Echo Autonomous Agent
+After=network.target
+
+[Service]
+Type=simple
+User=pratik.joshi
+WorkingDirectory=/Users/pratik.joshi/Documents/automate/core_echo
+ExecStart=/usr/bin/env python3 main.py
+Restart=on-failure
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target

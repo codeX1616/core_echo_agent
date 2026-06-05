@@ -1,0 +1,14 @@
+onnxruntime
+speechbrain
+qdrant-client
+llama-cpp-python
+fastapi
+uvicorn
+websockets
+jinja2
+pydantic
+torch
+torchaudio
+sounddevice
+numpy
+scipy

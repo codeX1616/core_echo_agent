@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Core-Echo Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; overflow: hidden; }
+        .hud-pulse { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 0.4; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col items-center justify-center">
+    <div id="app" class="w-full h-full p-8 flex flex-col items-center justify-center">
+        <!-- Idle State -->
+        <div id="state-idle" class="flex flex-col items-center">
+            <h1 class="text-6xl font-bold text-slate-300" id="clock">00:00</h1>
+            <p class="text-slate-500 mt-4 text-xl">System Active</p>
+        </div>
+
+        <!-- Listening HUD -->
+        <div id="state-listening" class="hidden flex-col items-center">
+            <div class="w-32 h-32 bg-blue-500 rounded-full hud-pulse mb-8"></div>
+            <h2 class="text-4xl text-blue-300">Listening...</h2>
+        </div>
+
+        <!-- Data Card -->
+        <div id="state-datacard" class="hidden w-3/4 max-w-4xl bg-slate-800 rounded-2xl p-8 shadow-2xl">
+            <h2 class="text-3xl font-bold mb-4" id="task-title">Task Executing</h2>
+            <div class="bg-slate-900 p-4 rounded text-green-400 font-mono text-sm" id="task-details">
+                {"status": "running"}
+            </div>
+        </div>
+
+        <!-- HITL Warning -->
+        <div id="state-hitl" class="hidden w-3/4 max-w-2xl bg-red-900/80 border-4 border-red-500 rounded-2xl p-8 shadow-2xl flex-col items-center">
+            <h2 class="text-5xl font-bold text-red-100 mb-6 flex items-center">⚠️ Action Required</h2>
+            <p class="text-xl text-red-200 mb-8 text-center" id="hitl-msg">Destructive action detected. Please confirm.</p>
+            <div class="flex gap-4">
+                <button class="bg-red-500 hover:bg-red-400 text-white px-8 py-3 rounded-lg font-bold">CONFIRM (Spacebar)</button>
+                <button class="bg-slate-600 hover:bg-slate-500 text-white px-8 py-3 rounded-lg font-bold">CANCEL</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const states = ['idle', 'listening', 'datacard', 'hitl'];
+        
+        function switchState(targetState, payload={}) {
+            states.forEach(s => document.getElementById(`state-${s}`).classList.add('hidden'));
+            document.getElementById(`state-${targetState}`).classList.remove('hidden');
+            
+            if (targetState === 'datacard') {
+                document.getElementById('task-title').innerText = payload.title || "Executing Task";
+                document.getElementById('task-details').innerText = JSON.stringify(payload.data, null, 2);
+            } else if (targetState === 'hitl') {
+                document.getElementById('hitl-msg').innerText = payload.message || "Destructive action detected.";
+            }
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // WebSocket connection
+        const ws = new WebSocket(`ws://${window.location.host}/ws`);
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            switchState(data.state, data.payload);
+        };
+    </script>
+</body>
+</html>
