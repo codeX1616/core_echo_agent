@@ -23,6 +23,7 @@ class IntentRouter:
             if "agent_manifest.json" in files:
                 with open(os.path.join(root, "agent_manifest.json"), "r") as f:
                     manifest = json.load(f)
+                    manifest["plugin_dir"] = root
                     self.schemas[manifest["name"]] = manifest
                     # In a real scenario, embed the description and store in Qdrant
                     

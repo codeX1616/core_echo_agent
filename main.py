@@ -5,6 +5,7 @@ from core.audio.pipeline import AudioPipeline
 from core.memory.db import ContextDB
 from core.memory.slm import SLMEngine
 from core.memory.router import IntentRouter
+from core.agent_builder import AgentBuilder
 from dashboard.app import app, broadcast_state
 from execution.sandbox import SandboxRunner
 from execution.hitl import HITLEngine
@@ -15,6 +16,7 @@ class CoreEcho:
         self.db = ContextDB()
         self.slm = SLMEngine()
         self.router = IntentRouter()
+        self.agent_builder = AgentBuilder()
         self.sandbox = SandboxRunner()
         self.hitl = HITLEngine(broadcast_callback=broadcast_state)
         
@@ -33,7 +35,30 @@ class CoreEcho:
             await broadcast_state("idle", {})
             return
             
-        # 3. Route Intent
+        # 3. Dynamic Agent Creation
+        if parsed_intent.get("intent") == "create_agent":
+            query = parsed_intent.get("parameters", {}).get("query", text)
+            print(f"No existing agent found for: '{query}'. Creating a new agent dynamically...")
+            await broadcast_state("datacard", {
+                "title": "Building Agent",
+                "data": {"query": query, "status": "Generating code..."}
+            })
+            
+            # Generate the new agent
+            new_agent_name, new_agent_manifest = self.agent_builder.build_agent_from_query(query)
+            
+            # Reload router schemas
+            self.router.load_schemas()
+            
+            print(f"Agent '{new_agent_name}' created successfully.")
+            
+            # Use the newly created agent directly
+            parsed_intent = {
+                "intent": new_agent_name,
+                "parameters": {"input_data": text}
+            }
+            
+        # 4. Route Intent
         schema = self.router.route(parsed_intent)
         if not schema:
             print("No matching schema found.")
@@ -51,14 +76,15 @@ class CoreEcho:
                 await broadcast_state("idle", {})
                 return
                 
-        # 5. Execute
+        # 6. Execute
         await broadcast_state("datacard", {
             "title": f"Executing: {schema['name']}",
             "data": parsed_intent.get("parameters")
         })
         
-        # Find plugin.py path (simplified)
-        plugin_path = os.path.join("plugins", "base_plugin", "plugin.py") # Mock routing logic for base_plugin
+        # Find plugin.py path dynamically based on schema
+        plugin_dir = schema.get("plugin_dir", os.path.join("plugins", "base_plugin"))
+        plugin_path = os.path.join(plugin_dir, "plugin.py")
         
         result = self.sandbox.execute_plugin(plugin_path, parsed_intent.get("parameters"))
         

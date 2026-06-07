@@ -1,0 +1,17 @@
+{
+    "name": "agent_from_the\u771f\u7684\u5f88_ste_2acae0",
+    "description": "Dynamically generated agent for handling: From the\u771f\u7684\u5f88 steepded region.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "input_data": {
+                "type": "string",
+                "description": "Information extracted from user query to be processed."
+            }
+        },
+        "required": [
+            "input_data"
+        ]
+    },
+    "destructive": false
+}

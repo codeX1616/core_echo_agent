@@ -12,15 +12,46 @@ class SLMEngine:
         Takes the user prompt, context, and available plugin schemas.
         Returns a structured JSON matching one of the schemas.
         """
-        system_prompt = f"You are Core-Echo. Use the following context and available tools to output a JSON object.\n\nContext:\n{context_md}\n\nAvailable Tools:\n{json.dumps(schemas, indent=2)}"
+        prompt_lower = prompt.lower()
         
-        # Mock SLM response based on prompt
-        # response = self.llm(f"{system_prompt}\n\nUser: {prompt}\n\nOutput JSON:", max_tokens=150)
-        # return json.loads(response['choices'][0]['text'])
-        
+        # Simple mock matching logic to find an existing agent
+        for schema_name, schema_data in schemas.items():
+            schema_name_normalized = schema_name.lower().replace("_", " ")
+            if schema_name_normalized in prompt_lower:
+                return {
+                    "intent": schema_name,
+                    "parameters": {
+                        "input_data": prompt,
+                        "file_path": "/tmp/mock_file"
+                    }
+                }
+            
+            # Match if the exact prompt is in the description (handles dynamic agents)
+            if prompt_lower in schema_data.get("description", "").lower():
+                return {
+                    "intent": schema_name,
+                    "parameters": {
+                        "input_data": prompt,
+                        "file_path": "/tmp/mock_file"
+                    }
+                }
+                
+            # Match keywords from description
+            desc_words = schema_data.get("description", "").lower().split()
+            match_count = sum(1 for word in desc_words if len(word) > 4 and word in prompt_lower)
+            if match_count >= 2:
+                return {
+                    "intent": schema_name,
+                    "parameters": {
+                        "input_data": prompt,
+                        "file_path": "/tmp/mock_file"
+                    }
+                }
+
+        # If no match is found, signal to the orchestrator to create a new agent
         return {
-            "intent": "open_file",
+            "intent": "create_agent",
             "parameters": {
-                "file_path": "/path/to/file"
+                "query": prompt
             }
         }

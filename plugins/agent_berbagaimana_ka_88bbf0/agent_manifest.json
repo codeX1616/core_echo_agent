@@ -1,0 +1,17 @@
+{
+    "name": "agent_berbagaimana_ka_88bbf0",
+    "description": "Dynamically generated agent for handling: berbagaimana kau criminalkan tengok beruntik hidup ingin mengapa mungkin jadi seprogramH egg gerasih mincedir dan persulavaisan",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "input_data": {
+                "type": "string",
+                "description": "Information extracted from user query to be processed."
+            }
+        },
+        "required": [
+            "input_data"
+        ]
+    },
+    "destructive": false
+}

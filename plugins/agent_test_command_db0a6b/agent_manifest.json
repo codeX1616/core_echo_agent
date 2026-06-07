@@ -1,0 +1,17 @@
+{
+    "name": "agent_test_command_db0a6b",
+    "description": "Dynamically generated agent for handling: Test command",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "input_data": {
+                "type": "string",
+                "description": "Information extracted from user query to be processed."
+            }
+        },
+        "required": [
+            "input_data"
+        ]
+    },
+    "destructive": false
+}

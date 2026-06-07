@@ -1,0 +1,17 @@
+{
+    "name": "agent_\ubb54\uac00_\uc6b8\uc5b4\uc11c_b3f9e2",
+    "description": "Dynamically generated agent for handling: \ubb54\uac00 \uc6b8\uc5b4\uc11c",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "input_data": {
+                "type": "string",
+                "description": "Information extracted from user query to be processed."
+            }
+        },
+        "required": [
+            "input_data"
+        ]
+    },
+    "destructive": false
+}

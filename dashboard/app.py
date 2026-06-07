@@ -1,9 +1,14 @@
 from fastapi import FastAPI, WebSocket
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 import asyncio
 import json
 
 app = FastAPI()
+
+@app.get("/")
+async def root():
+    return RedirectResponse(url="/static/index.html")
 
 # Mount static files for the frontend
 app.mount("/static", StaticFiles(directory="dashboard/static"), name="static")

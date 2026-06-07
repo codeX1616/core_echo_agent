@@ -4,7 +4,12 @@ import sounddevice as sd
 import torch
 import torchaudio
 from speechbrain.inference.speaker import EncoderClassifier
-from whisper_cpp_python import Whisper
+try:
+    import whisper
+    Whisper = whisper
+except Exception as e:
+    print(f"Warning: whisper library not found ({e}). Using mock ASR.")
+    Whisper = None
 import onnxruntime as ort
 import os
 
@@ -17,8 +22,12 @@ class AudioPipeline:
         # Load Silero VAD (placeholder for ONNX model)
         # self.vad_session = ort.InferenceSession("silero_vad.onnx")
         
-        # Load Whisper (placeholder path)
-        # self.asr = Whisper(model_path="ggml-distil-large-v3.bin")
+        # Load Whisper
+        if Whisper is not None:
+            print("Loading Whisper model...")
+            self.asr = Whisper.load_model("tiny")
+        else:
+            self.asr = None
         
         # Load ECAPA-TDNN for Speaker Verification
         self.speaker_classifier = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb")
@@ -43,10 +52,14 @@ class AudioPipeline:
 
     def process_buffer(self):
         """Returns transcribed text if valid speaker"""
-        # 1. Run VAD
-        # 2. Extract Speech Segment
-        speech = self.buffer # Simplified
+        speech = self.buffer
         
+        # 1. Simple Energy-Based VAD to ignore silence
+        rms_energy = np.sqrt(np.mean(speech**2))
+        if rms_energy < 0.01:
+            self.buffer = np.zeros(0, dtype=np.float32)
+            return None
+            
         # 3. Speaker Verification
         if self.owner_voice_tensor is not None:
             tensor = torch.tensor(speech).unsqueeze(0)
@@ -57,8 +70,20 @@ class AudioPipeline:
                 return None
                 
         # 4. ASR
-        # text = self.asr.transcribe(speech)
-        text = "Test command" # Mock transcription
+        if self.asr:
+            try:
+                # Whisper expects a 16kHz float32 numpy array
+                result = self.asr.transcribe(speech, language="en")
+                text = result.get("text", "").strip()
+            except Exception as e:
+                print(f"ASR Error: {e}")
+                text = ""
+        else:
+            text = "Test command" # Fallback if library failed to load
+            
+        if not text:
+            self.buffer = np.zeros(0, dtype=np.float32)
+            return None
         
         # Clear buffer
         self.buffer = np.zeros(0, dtype=np.float32)
